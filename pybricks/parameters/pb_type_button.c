@@ -55,7 +55,44 @@ static const qstr buttons[] = {
     #endif
 };
 
+static const _pb_button_member_t pb_type_button_instances[] = {
+    mp_button_left_,
+    mp_button_right_,
+    mp_button_centre,
+    MP_QSTR_LEFT_PLUS,
+    MP_QSTR_LEFT_MINUS,
+    MP_QSTR_RIGHT_PLUS,
+    MP_QSTR_RIGHT_MINUS,
+    #if !PYBRICKS_PY_PARAMETERS_BUTTON_REMOTE_ONLY
+    MP_QSTR_UP,
+    MP_QSTR_DOWN,
+    MP_QSTR_LEFT_UP,
+    MP_QSTR_LEFT_DOWN,
+    MP_QSTR_RIGHT_UP,
+    MP_QSTR_RIGHT_DOWN,
+    MP_QSTR_BEACON,
+    MP_QSTR_BLUETOOTH,
+    MP_QSTR_A,
+    MP_QSTR_B,
+    MP_QSTR_X,
+    MP_QSTR_Y,
+    MP_QSTR_LB,
+    MP_QSTR_RB,
+    MP_QSTR_VIEW,
+    MP_QSTR_MENU,
+    MP_QSTR_GUIDE,
+    MP_QSTR_LJ,
+    MP_QSTR_RJ,
+    MP_QSTR_UPLOAD,
+    MP_QSTR_P1,
+    MP_QSTR_P2,
+    MP_QSTR_P3,
+    MP_QSTR_P4,
+    #endif
+};
+
 extern const mp_obj_type_t pb_type_button_;
+extern const mp_obj_type_t pb_type_button_member_;
 
 static void pb_type_button_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
     pb_obj_button_t *self = MP_OBJ_TO_PTR(self_in);
@@ -78,14 +115,19 @@ static void pb_type_button_attribute_handler(mp_obj_t self_in, qstr attr, mp_obj
     // Allocate new button object if the attribute is a valid button.
     for (size_t i = 0; i < MP_ARRAY_SIZE(buttons); i++) {
         if (attr == buttons[i]) {
-            dest[0] = pb_type_button_new(attr);
+            // No cached entry was found, so we create a new one and cache that.
+            if (pb_type_button_instances[i] == MP_OBJ_NULL) {
+                pb_type_button_instances[i] = pb_type_button_new(attr);
+            };
+
+            // Use cached instances for enum-like members.
+            dest[0] pb_type_button_instances[i];
             return;
         }
     }
 }
 
 static mp_obj_t pb_type_button_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs_in) {
-
     // Only equality comparison is supported.
     if (op != MP_BINARY_OP_EQUAL) {
         return MP_OBJ_NULL;
@@ -96,7 +138,7 @@ static mp_obj_t pb_type_button_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_
 
     pb_obj_button_t *lhs = MP_OBJ_TO_PTR(lhs_in);
     pb_obj_button_t *rhs = MP_OBJ_TO_PTR(rhs_in);
-    return mp_obj_new_bool(lhs->name == rhs->name);
+    return mp_obj_new_bool(lhs == rhs);
 }
 
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_button_,
